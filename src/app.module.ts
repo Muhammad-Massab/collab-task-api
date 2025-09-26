@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
@@ -7,16 +8,33 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
+import { EventsModule } from './events/events.module';
 
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import authConfig from './config/auth.config';
+import mongodbConfig from './config/mongodb.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, authConfig],
+      load: [appConfig, databaseConfig, authConfig, mongodbConfig],
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const uri = configService.get<string>('mongodb.uri');
+        const database = configService.get<string>('mongodb.database');
+        const user = configService.get<string | undefined>('mongodb.user');
+        const pass = configService.get<string | undefined>('mongodb.pass');
+        return {
+          uri: `${uri}/${database}`,
+          user,
+          pass,
+        };
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -35,6 +53,7 @@ import authConfig from './config/auth.config';
     AuthModule,
     UsersModule,
     TasksModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

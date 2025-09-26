@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../users/user.entity';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,7 @@ export class AuthService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
+    private readonly eventsService: EventsService,
   ) {}
 
   async register(
@@ -48,6 +50,11 @@ export class AuthService {
 
     delete savedUser.password;
 
+    await this.eventsService.logEvent({
+      eventType: 'auth.registered',
+      payload: { userId: savedUser.id, email: savedUser.email },
+      userId: savedUser.id,
+    });
     return { user: savedUser, token };
   }
 
@@ -73,6 +80,11 @@ export class AuthService {
 
     delete user.password;
 
+    await this.eventsService.logEvent({
+      eventType: 'auth.logged_in',
+      payload: { userId: user.id, email: user.email },
+      userId: user.id,
+    });
     return { user, token };
   }
 

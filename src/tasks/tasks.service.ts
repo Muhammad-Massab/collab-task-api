@@ -9,6 +9,7 @@ import { Task } from '../tasks/task.entity';
 import { User } from '../users/user.entity';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class TasksService {
@@ -17,6 +18,7 @@ export class TasksService {
     private tasksRepository: Repository<Task>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private readonly eventsService: EventsService,
   ) {}
 
   async create(
@@ -40,7 +42,13 @@ export class TasksService {
       assignedUserId,
     });
 
-    return this.tasksRepository.save(task);
+    const saved = await this.tasksRepository.save(task);
+    await this.eventsService.logEvent({
+      eventType: 'task.created',
+      payload: { taskId: saved.id, title: saved.title, assignedUserId },
+      userId: createdById,
+    });
+    return saved;
   }
 
   async findAll(userId?: string): Promise<Task[]> {
@@ -111,7 +119,13 @@ export class TasksService {
     }
 
     Object.assign(task, { ...taskData, assignedUserId });
-    return this.tasksRepository.save(task);
+    const updated = await this.tasksRepository.save(task);
+    await this.eventsService.logEvent({
+      eventType: 'task.updated',
+      payload: { taskId: updated.id, changes: updateTaskDto },
+      userId,
+    });
+    return updated;
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -124,6 +138,11 @@ export class TasksService {
     }
 
     await this.tasksRepository.remove(task);
+    await this.eventsService.logEvent({
+      eventType: 'task.deleted',
+      payload: { taskId: id },
+      userId,
+    });
   }
 
   async findMyTasks(userId: string): Promise<Task[]> {

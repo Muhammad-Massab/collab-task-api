@@ -9,6 +9,7 @@ import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { User } from '../users/user.entity';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
+import { EventsService } from '../events/events.service';
 
 jest.mock('bcryptjs');
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
@@ -48,6 +49,10 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: EventsService,
+          useValue: { logEvent: jest.fn() },
         },
       ],
     }).compile();

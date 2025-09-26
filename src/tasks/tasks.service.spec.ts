@@ -5,9 +5,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { Task, TaskStatus, TaskPriority } from '../entities/task.entity';
+import { Task, TaskStatus, TaskPriority } from './task.entity';
 import { User } from '../users/user.entity';
-import { CreateTaskDto, UpdateTaskDto } from './dto/update-task.dto';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { EventsService } from '../events/events.service';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -73,6 +75,10 @@ describe('TasksService', () => {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
+        {
+          provide: EventsService,
+          useValue: { logEvent: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -96,8 +102,8 @@ describe('TasksService', () => {
 
     it('should successfully create a task', async () => {
       userRepository.findOne.mockResolvedValue(mockAssignedUser as User);
-      taskRepository.create.mockReturnValue(mockTask as Task);
-      taskRepository.save.mockResolvedValue(mockTask as Task);
+      taskRepository.create.mockReturnValue(mockTask);
+      taskRepository.save.mockResolvedValue(mockTask);
 
       const result = await service.create(createTaskDto, 'user-id');
 
@@ -121,8 +127,8 @@ describe('TasksService', () => {
         assignedUserId: undefined,
       };
 
-      taskRepository.create.mockReturnValue(mockTask as Task);
-      taskRepository.save.mockResolvedValue(mockTask as Task);
+      taskRepository.create.mockReturnValue(mockTask);
+      taskRepository.save.mockResolvedValue(mockTask);
 
       const result = await service.create(
         createTaskDtoWithoutAssignee,
@@ -176,7 +182,7 @@ describe('TasksService', () => {
 
   describe('findOne', () => {
     it('should return a task by id for authorized user', async () => {
-      queryBuilder.getOne.mockResolvedValue(mockTask as Task);
+      queryBuilder.getOne.mockResolvedValue(mockTask);
 
       const result = await service.findOne('task-id', 'user-id');
 
