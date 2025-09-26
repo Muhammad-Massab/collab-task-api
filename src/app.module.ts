@@ -24,17 +24,9 @@ import mongodbConfig from './config/mongodb.config';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const uri = configService.get<string>('mongodb.uri');
-        const database = configService.get<string>('mongodb.database');
-        const user = configService.get<string | undefined>('mongodb.user');
-        const pass = configService.get<string | undefined>('mongodb.pass');
-        return {
-          uri: `${uri}/${database}`,
-          user,
-          pass,
-        };
-      },
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('mongodb.uri'),
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
