@@ -22,7 +22,7 @@ export class AuthService {
 
   async register(
     registerDto: RegisterDto,
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{ user: User; access_token: string }> {
     const { email, password, firstName, lastName } = registerDto;
 
     const existingUser = await this.usersRepository.findOne({
@@ -55,10 +55,10 @@ export class AuthService {
       payload: { userId: savedUser.id, email: savedUser.email },
       userId: savedUser.id,
     });
-    return { user: savedUser, token };
+    return { user: savedUser, access_token: token };
   }
 
-  async login(loginDto: LoginDto): Promise<{ user: User; token: string }> {
+  async login(loginDto: LoginDto): Promise<{ user: User; access_token: string }> {
     const { email, password } = loginDto;
 
     const user = await this.usersRepository.findOne({
@@ -85,7 +85,7 @@ export class AuthService {
       payload: { userId: user.id, email: user.email },
       userId: user.id,
     });
-    return { user, token };
+    return { user, access_token: token };
   }
 
   async validateUser(payload: { sub: string; email: string }): Promise<User> {
